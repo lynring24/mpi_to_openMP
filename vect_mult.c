@@ -109,16 +109,17 @@ void read_data(double local_vec1[], double local_vec2[], double* scalar_p,
       a = malloc(local_n * comm_sz * sizeof(double));
       printf("Enter the first vector\n");
 	  /* TO BE FILLED (Get first vector from user and scatter to processors) */
-    for(i =0; i < local_n; i++ ){
+     for(i =0; i < local_n * comm_sz ; i++ )
 	scanf("%lf", &a[i]);
-	}
+	
+
      MPI_Scatter( a, local_n, MPI_DOUBLE, local_vec1, local_n, MPI_DOUBLE, root, comm); 
-      printf("Enter the second vector\n");
+     printf("Enter the second vector\n");
 	  /* TO BE FILLED (Get second vector from user and scatter to processors) */
-	for(i =0;i < local_n; i++ ){
+     for(i =0;i < local_n * comm_sz; i++ )
 	scanf("%lf", &a[i]);
-	}
-	 MPI_Scatter( a, local_n, MPI_DOUBLE, local_vec2, local_n, MPI_DOUBLE, root, comm); 
+	
+     MPI_Scatter( a, local_n, MPI_DOUBLE, local_vec2, local_n, MPI_DOUBLE, root, comm); 
 
       free(a);
    } else {
@@ -137,7 +138,7 @@ void print_vector(double local_vec[], int local_n, int n, char title[], int my_r
    if (my_rank == 0) {
       a = malloc(n * sizeof(double));
 	  /* TO BE FILLED (Collect scattered local_vec to a) */
-	MPI_Allgather(local_vec, local_n, MPI_DOUBLE, a, n, MPI_DOUBLE, comm);
+	MPI_Gather(local_vec, local_n, MPI_DOUBLE, a, local_n, MPI_DOUBLE, 0, comm);
       printf("%s\n", title);
       for (i = 0; i < n; i++) 
          printf("%.2f ", a[i]);
@@ -145,7 +146,7 @@ void print_vector(double local_vec[], int local_n, int n, char title[], int my_r
       free(a);
    } else {
 	  /* TO BE FILLED (Collect scattered local_vec to a) */
-	MPI_Allgather(local_vec, local_n, MPI_DOUBLE, a, n, MPI_DOUBLE, comm);
+        MPI_Gather(local_vec, local_n, MPI_DOUBLE, a, local_n, MPI_DOUBLE, 0, comm);
    }
 
 }
@@ -154,12 +155,12 @@ void print_vector(double local_vec[], int local_n, int n, char title[], int my_r
 double par_dot_product(double local_vec1[], double local_vec2[], 
       int local_n, MPI_Comm comm) {
    int local_i;
-   double dot_product, local_dot_product = 0;
+   double dot_product=0, local_dot_product = 0;
 
    /* TO BE FILLED (Calculate local_dot_product using local_vec1 & local_vec2. Then, get dot_product.) */
 	for(local_i =0 ; local_i < local_n; local_i++) 
 		local_dot_product += local_vec1[local_i]*local_vec2[local_i];
-	dot_product = local_dot_product;
+   MPI_Reduce(&local_dot_product , &dot_product, 1, MPI_DOUBLE, MPI_SUM, 0, comm);
    return dot_product;
 }
 

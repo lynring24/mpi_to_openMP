@@ -219,15 +219,14 @@ void Mat_vect_mult(
    double* my_y;
    int* recv_counts;
    int i, j;
-   
    recv_counts = malloc(comm_sz*sizeof(int));
    my_y = malloc(n*sizeof(double));
-   /* TO BE FILLED (Use local_a and local_x to multiply and add it to my_y)*/
 
+   /* TO BE FILLED (Use local_a and local_x to multiply and add it to my_y)*/
    for (i=0; i < m; i++) {
 	my_y[i]=0;
 	for( j=0 ; j < local_n; j++) {
-		printf("[%d,%d][%lf, %lf]\n", i,j,local_A[i*local_n+j] , local_x[j]);
+		printf("[%d,%d][%lf, %lf,%lf]\n", i,j,local_A[i*local_n+j] , local_x[i], local_x[j]);
 		my_y[i] += local_A[i*local_n+j] * local_x[j];
 	}
    } 
@@ -248,7 +247,11 @@ void Print_vector(
               int       my_rank     /* in */,
               MPI_Comm  comm        /* in */) {
    double* vec = NULL;
-   
+   /*
+    for(int i=0; i<local_n; i++)
+        printf(">> %lf <<",local_vec[i]); 
+	printf("\n");*/
+
    if (my_rank == 0) {
       printf("\nThe vector %s\n", title);
       vec = malloc(n*sizeof(double));
