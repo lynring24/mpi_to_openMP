@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <mpi.h>
 
 void Get_dims(int* m_p, int* local_m_p, int* n_p, int* local_n_p,
@@ -163,18 +164,20 @@ void Print_matrix(char title[], double local_A[], int m, int local_n,
 
 	  /* TO BE FILLED (Collect values from processors and print it. 
 	  Send datatype is MPI_DOUBLE, and recieve datatype is block_col_mpi_t.) */
+
+
       MPI_Gather(local_A, m*local_n, MPI_DOUBLE, A, m*local_n, MPI_DOUBLE, 0, comm);
+	
 	for(i=0; i<m ; i++) {
 		for(j=0;j<n;j++) 
 			printf("%lf ", A[i*n+j]);
 		printf("\n");
 	}
-	
 
       free(A);
    } else {
 	  /* TO BE FILLED (Collect values from processors) */
-	MPI_Gather(local_A, m*local_n, MPI_DOUBLE, A, m*local_n, MPI_DOUBLE, 0, comm);
+	MPI_Gather(local_A, m*local_n, MPI_DOUBLE, A, m*local_n, block_col_mpi_t, 0, comm);
 
    }
 }
@@ -197,11 +200,18 @@ void Read_vector(
 	  Scatter the values. Send datatype and Recieve datatype is MPI_DOUBLE.)*/
 	for(i =0; i<n; i++) 
 	    fscanf(fp, "%lf", &vec[i]);
-	MPI_Scatter(vec, local_n, MPI_DOUBLE, local_vec, local_n, MPI_DOUBLE, root, comm); 
+	/*if x then bcast, else scatter*/	
+	/*if(strcmp(prompt, "x")) 
+		MPI_Bcast(vec, n , MPI_DOUBLE, 0, comm);
+	else*/
+		MPI_Scatter(vec, local_n, MPI_DOUBLE, local_vec, local_n, MPI_DOUBLE, root, comm); 
       free(vec);
    } else {
 	   /* TO BE FILLED (Scatter)*/
-	MPI_Scatter(vec, local_n, MPI_DOUBLE, local_vec, local_n, MPI_DOUBLE, root, comm); 
+	/*if(strcmp(prompt, "x")) 
+		MPI_Bcast(vec, n , MPI_DOUBLE, 0, comm);
+	else*/
+		MPI_Scatter(vec, local_n, MPI_DOUBLE, local_vec, local_n, MPI_DOUBLE, root, comm); 
    }
 }
 
@@ -217,17 +227,21 @@ void Mat_vect_mult(
                MPI_Comm  comm       /* in  */) {
    
    double* my_y;
+   double* x;
    int* recv_counts;
    int i, j;
    recv_counts = malloc(comm_sz*sizeof(int));
    my_y = malloc(n*sizeof(double));
+   x = malloc(n*sizeof(double));
+
+   MPI_Allgather(local_x, local_n, MPI_DOUBLE, x, local_n,MPI_DOUBLE, comm);
 
    /* TO BE FILLED (Use local_a and local_x to multiply and add it to my_y)*/
-   for (i=0; i < m; i++) {
+    for (i=0; i < local_m; i++) {
 	my_y[i]=0;
-	for( j=0 ; j < local_n; j++) {
-		//printf("[%d,%d][%lf, %lf,%lf]\n", i,j,local_A[i*local_n+j] , local_x[i], local_x[j]);
-		my_y[i] += local_A[i*local_n+j] * local_x[j];
+	for( j=0 ; j < n; j++) {
+		printf("[%d,%d][%lf, %lf]\n", i,j,local_A[i*n+j],  x[j]);
+		my_y[i] += local_A[i*n+j] * x[j];
 	}
    } 
 
@@ -247,21 +261,22 @@ void Print_vector(
               int       my_rank     /* in */,
               MPI_Comm  comm        /* in */) {
    double* vec = NULL;
-   
 
    if (my_rank == 0) {
       printf("\nThe vector %s\n", title);
       vec = malloc(n*sizeof(double));
 	  /* TO BE FILLED (Collect local_vec to vec and print it. Send datatype and recieve datatype is MPI_DOUBLE.)*/
-      MPI_Gather(local_vec, local_n, MPI_DOUBLE, vec, local_n, MPI_DOUBLE, 0, comm);
+      if(!strcmp("title", "x"))
+      	MPI_Gather(local_vec, local_n, MPI_DOUBLE, vec, local_n, MPI_DOUBLE, 0, comm);
+
       for(int i=0; i<n; i++) 
 	printf("%lf ",vec[i]);
       printf("\n");
+
       free(vec);
    }  else {
 	  /* TO BE FILLED (Collect local_vec to vec)*/
-      MPI_Gather(local_vec, local_n, MPI_DOUBLE, vec, local_n, MPI_DOUBLE, 0, comm);
+      if(!strcmp("title", "x"))
+      	MPI_Gather(local_vec, local_n, MPI_DOUBLE, vec, local_n, MPI_DOUBLE, 0, comm);
    }
-
- 
 }
