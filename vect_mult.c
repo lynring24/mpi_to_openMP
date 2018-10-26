@@ -103,7 +103,7 @@ void read_data(double local_vec1[], double local_vec2[], double* scalar_p,
    }
    
    /* TO BE FILLED (Give scalar_p value to all processors) */
-   MPI_Bcast(&scalar_p , 1, MPI_DOUBLE, 0, comm);
+   MPI_Bcast(scalar_p , 1, MPI_DOUBLE, 0, comm);
    
    if (my_rank == 0){
       a = malloc(local_n * comm_sz * sizeof(double));
@@ -136,10 +136,12 @@ void print_vector(double local_vec[], int local_n, int n, char title[], int my_r
    int i;
    
    if (my_rank == 0) {
+      printf("%s\n", title);
+
       a = malloc(n * sizeof(double));
 	  /* TO BE FILLED (Collect scattered local_vec to a) */
 	MPI_Gather(local_vec, local_n, MPI_DOUBLE, a, local_n, MPI_DOUBLE, 0, comm);
-      printf("%s\n", title);
+      
       for (i = 0; i < n; i++) 
          printf("%.2f ", a[i]);
       printf("\n");
