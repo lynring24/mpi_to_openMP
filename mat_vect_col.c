@@ -194,25 +194,17 @@ void Read_vector(
    int i=0;
    if (my_rank == 0) {
       vec = malloc(n*sizeof(double));
-      // printf("\nThe vector %s\n", prompt);
-
-	  /* TO BE FILLED (Get value from the file and print it. 
+      /* TO BE FILLED (Get value from the file and print it. 
 	  Scatter the values. Send datatype and Recieve datatype is MPI_DOUBLE.)*/
-	for(i =0; i<n; i++) 
+     for(i =0; i<n+1; i++) 
 	    fscanf(fp, "%lf", &vec[i]);
-	/*if x then bcast, else scatter*/	
-	/*if(strcmp(prompt, "x")) 
-		MPI_Bcast(vec, n , MPI_DOUBLE, 0, comm);
-	else*/
-		MPI_Scatter(vec, local_n, MPI_DOUBLE, local_vec, local_n, MPI_DOUBLE, root, comm); 
+      MPI_Scatter(vec, local_n, MPI_DOUBLE, local_vec, local_n, MPI_DOUBLE, root, comm); 
       free(vec);
    } else {
 	   /* TO BE FILLED (Scatter)*/
-	/*if(strcmp(prompt, "x")) 
-		MPI_Bcast(vec, n , MPI_DOUBLE, 0, comm);
-	else*/
-		MPI_Scatter(vec, local_n, MPI_DOUBLE, local_vec, local_n, MPI_DOUBLE, root, comm); 
+	MPI_Scatter(vec, local_n, MPI_DOUBLE, local_vec, local_n, MPI_DOUBLE, root, comm); 
    }
+
 }
 
 void Mat_vect_mult(
@@ -245,6 +237,11 @@ void Mat_vect_mult(
 	}
    } 
 
+   
+   for (i=0; i < local_m; i++) {
+      printf("%lf\n", my_y[i]);
+   }
+
    for (i = 0; i < comm_sz; i++) {
       recv_counts[i] = local_m;
    }
@@ -266,17 +263,18 @@ void Print_vector(
       printf("\nThe vector %s\n", title);
       vec = malloc(n*sizeof(double));
 	  /* TO BE FILLED (Collect local_vec to vec and print it. Send datatype and recieve datatype is MPI_DOUBLE.)*/
-      if(!strcmp("title", "x"))
+      if(strcmp(title, "x"))
       	MPI_Gather(local_vec, local_n, MPI_DOUBLE, vec, local_n, MPI_DOUBLE, 0, comm);
-
+      else ;
+	
       for(int i=0; i<n; i++) 
-	printf("%lf ",vec[i]);
+	printf("%lf ",local_vec[i]);
       printf("\n");
 
       free(vec);
    }  else {
 	  /* TO BE FILLED (Collect local_vec to vec)*/
-      if(!strcmp("title", "x"))
+      if(!strcmp(title, "x"))
       	MPI_Gather(local_vec, local_n, MPI_DOUBLE, vec, local_n, MPI_DOUBLE, 0, comm);
    }
 }
