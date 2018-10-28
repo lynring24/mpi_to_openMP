@@ -18,16 +18,8 @@ void Read_vector(char prompt[], double local_vec[], int n, int local_n,
       int my_rank, MPI_Comm comm);
 void Print_vector(char title[], double local_vec[], int n,
       int local_n, int my_rank, MPI_Comm comm);
-void Mat_vect_mult(
-               double    local_A[] , 
-               double    local_x[], 
-               double    local_y[] ,
-               int       local_m , 
-               int       m         ,
-               int       n         ,
-               int       local_n    , 
-               int       comm_sz,
-               MPI_Comm  comm ) ;
+void Mat_vect_mult( double local_A[], double local_x[], double local_y[], int local_m , int  m,
+               int n, int local_n, int comm_sz, int local_rank,	MPI_Comm  comm ) ;
 char fileName[10];
 FILE *fp;
 
@@ -59,7 +51,7 @@ int main(void) {
    Print_vector("x", local_x, n, local_m, my_rank, comm);
    
    local_start = MPI_Wtime();
-   Mat_vect_mult(local_A, local_x, local_y, local_m, m, n, local_n, comm_sz, comm);   
+   Mat_vect_mult(local_A, local_x, local_y, local_m, m, n, local_n, comm_sz, my_rank,  comm);   
    local_finish = MPI_Wtime();
    local_elapsed = local_finish - local_start;
    printf("rank : %d, local elapsed time : %e\n", my_rank, local_elapsed);
@@ -222,30 +214,53 @@ void Mat_vect_mult(
                int       n         /* in  */,
                int       local_n    /* in  */, 
                int       comm_sz,
+               int       local_rank,	
                MPI_Comm  comm       /* in  */) {
    
    double* my_y;
    double* x;
    int* recv_counts;
    int i, j;
+   int m_loc; 
    recv_counts = malloc(comm_sz*sizeof(int));
    my_y = malloc(n*sizeof(double));
    x = malloc(n*sizeof(double));
 
    MPI_Allgather(local_x, local_n, MPI_DOUBLE, x, local_n,MPI_DOUBLE, comm);
 
-   /* TO BE FILLED (Use local_a and local_x to multiply and add it to my_y)*/
+/*test code
+ printf("rank %d vector x\n", local_rank);	
+  for( j=0 ; j < n; j++) 
+	printf("%lf ", x[j]);
+  printf("\n");	*/
+
+ /* TO BE FILLED (Use local_a and local_x to multiply and add it to my_y)
+  for (i=0; i < local_m; i++) {
+	my_y[i]=0;
+	for( j=0 ; j < n; j++) {
+		// printf("[%d,%d][%lf, %lf]\n", i,j,local_A[i*n+j], x[j]);
+		my_y[i] += local_A[i*n+j] * x[j];
+	}
+   } */
+
+// save the result in right location, the location should be local_start = rank * unit_size + start to local_end = start + unit_size 
+     m_loc =  local_rank * local_m; 
     for (i=0; i < local_m; i++) {
 	my_y[i]=0;
 	for( j=0 ; j < n; j++) {
-		printf("[%d,%d][%lf, %lf]\n", i,j,local_A[i*n+j], x[j]);
-		my_y[i] += local_A[i*n+j] * x[j];
+		//printf("[%d,%d][%lf, %lf]\n", i,j,local_A[i*n+j], x[j]);
+		my_y[i+m_loc] += local_A[i*n+j] * x[j];
 	}
    } 
+/*test code
+  for( j=0 ; j < n; j++) 
+		printf("%lf ", my_y[j]);
+  printf("\n");	
 
-  for (i = 0; i < comm_sz; i++) {
+   MPI_Allreduce(my_y, &local_y, 4 , MPI_DOUBLE, MPI_SUM, comm);*/
+
+  for (i = 0; i < comm_sz; i++) 
       recv_counts[i] = local_m;
-   }
    
    MPI_Reduce_scatter(my_y, local_y, recv_counts, MPI_DOUBLE, MPI_SUM, comm);
    free(my_y);

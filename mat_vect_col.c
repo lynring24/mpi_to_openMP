@@ -67,7 +67,7 @@ int main(void) {
    free(local_A);
    free(local_x);
    free(local_y);
-   MPI_Type_free(&block_col_mpi_t);
+   //MPI_Type_free(&block_col_mpi_t);
    MPI_Finalize();
    return 0;
 }
@@ -144,13 +144,13 @@ void Read_matrix(
 	for(int i=0; i < m; i++ )
  	   for( int j=0; j<n; j++) 
 		fscanf(fp, "%lf", &A[i*n+j]);
-	//MPI_Scatter( A,  local_n*m, block_col_mpi_t, local_A , m*local_n, MPI_DOUBLE, 0, comm); 
-    MPI_Scatter(A,  local_n*m, MPI_DOUBLE, local_A, local_n*m, MPI_DOUBLE, 0, comm);
-      free(A);
+	//MPI_Scatter( A,  local_n*m, block_col_mpi_t, local_A , m*local_n, MPI_DOUBLE, 0, comm);
+       MPI_Scatter(A,  local_n*m, MPI_DOUBLE, local_A, local_n*m, MPI_DOUBLE, 0, comm);
+       free(A);
    } else {
       /* TO BE FILLED (Scatter)*/
 	//MPI_Scatter( A,  local_n*m, block_col_mpi_t, local_A , m*local_n, MPI_DOUBLE, 0, comm); 
-    MPI_Scatter(A,  local_n*m, MPI_DOUBLE, local_A, local_n*m, MPI_DOUBLE, 0, comm);
+      MPI_Scatter(A,  local_n*m, MPI_DOUBLE, local_A, local_n*m, MPI_DOUBLE, 0, comm);
    }
 }
 
@@ -192,20 +192,22 @@ void Read_vector(
    double* vec = NULL;
    int root = 0;
    int i=0;
-   if (my_rank == 0) {
+    if (my_rank == 0) {
       vec = malloc(n*sizeof(double));
-      /* TO BE FILLED (Get value from the file and print it. 
+      // printf("\nThe vector %s\n", prompt);
+
+	  /* TO BE FILLED (Get value from the file and print it. 
 	  Scatter the values. Send datatype and Recieve datatype is MPI_DOUBLE.)*/
-     for(i =0; i<n+1; i++) 
+	for(i =0; i<n; i++) 
 	    fscanf(fp, "%lf", &vec[i]);
-      MPI_Scatter(vec, local_n, MPI_DOUBLE, local_vec, local_n, MPI_DOUBLE, root, comm); 
+	MPI_Scatter(vec, local_n, MPI_DOUBLE, local_vec, local_n, MPI_DOUBLE, root, comm); 
       free(vec);
    } else {
 	   /* TO BE FILLED (Scatter)*/
 	MPI_Scatter(vec, local_n, MPI_DOUBLE, local_vec, local_n, MPI_DOUBLE, root, comm); 
    }
-
 }
+
 
 void Mat_vect_mult(
                double    local_A[]  /* in  */, 
@@ -216,6 +218,7 @@ void Mat_vect_mult(
                int       n         /* in  */,
                int       local_n    /* in  */, 
                int       comm_sz,
+	       int 	 my_rank,
                MPI_Comm  comm       /* in  */) {
    
    double* my_y;
@@ -232,17 +235,12 @@ void Mat_vect_mult(
     for (i=0; i < local_m; i++) {
 	my_y[i]=0;
 	for( j=0 ; j < n; j++) {
-		printf("[%d,%d][%lf, %lf]\n", i,j,local_A[i*n+j],  x[j]);
+		printf("[%d,%d][%lf, %lf]\n", i,j,local_A[i*n+j], x[j]);
 		my_y[i] += local_A[i*n+j] * x[j];
 	}
    } 
 
-   
-   for (i=0; i < local_m; i++) {
-      printf("%lf\n", my_y[i]);
-   }
-
-   for (i = 0; i < comm_sz; i++) {
+  for (i = 0; i < comm_sz; i++) {
       recv_counts[i] = local_m;
    }
    
@@ -265,7 +263,6 @@ void Print_vector(
 	  /* TO BE FILLED (Collect local_vec to vec and print it. Send datatype and recieve datatype is MPI_DOUBLE.)*/
       if(strcmp(title, "x"))
       	MPI_Gather(local_vec, local_n, MPI_DOUBLE, vec, local_n, MPI_DOUBLE, 0, comm);
-      else ;
 	
       for(int i=0; i<n; i++) 
 	printf("%lf ",local_vec[i]);
@@ -274,7 +271,7 @@ void Print_vector(
       free(vec);
    }  else {
 	  /* TO BE FILLED (Collect local_vec to vec)*/
-      if(!strcmp(title, "x"))
+      if(strcmp(title, "x"))
       	MPI_Gather(local_vec, local_n, MPI_DOUBLE, vec, local_n, MPI_DOUBLE, 0, comm);
    }
 }
