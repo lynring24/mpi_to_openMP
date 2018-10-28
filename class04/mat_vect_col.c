@@ -226,6 +226,9 @@ void Mat_vect_mult(
    x = malloc(n*sizeof(double));
 
    my_y = malloc(n*sizeof(double));
+   for( j=0 ; j < n; j++) 
+	my_y[j] = 0;
+
    MPI_Allgather(local_x, local_n, MPI_DOUBLE, x, local_n,MPI_DOUBLE, comm);
 
 /*test code
@@ -245,16 +248,19 @@ void Mat_vect_mult(
 
 
 // save the result in right location, the location should be local_start = rank * unit_size + start to local_end = start + unit_size 
-   m_loc =  local_rank * local_m; 
-   printf("\n rank %d : ", local_rank);		
+   m_loc =  local_rank * local_m; 	
     for (i=0; i < local_m; i++) {
-	my_y[i]=0;
 	for( j=0 ; j < n; j++) {
 		my_y[i+m_loc] += local_A[i*n+j] * x[j];
 	}
-        printf("%lf ", my_y[i+m_loc] );
    } 
-  printf("\n");	
+  
+ printf("rank %d vector y\n", local_rank);	
+  for( j=0 ; j < n; j++) 
+	printf("%lf ", my_y[j]);
+  printf("\n");
+
+
 
   recv_counts = malloc(comm_sz*sizeof(int));
    
