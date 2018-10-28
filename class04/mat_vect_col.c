@@ -190,7 +190,6 @@ void Read_vector(
    int i=0;
     if (my_rank == 0) {
       vec = malloc(n*sizeof(double));
-      // printf("\nThe vector %s\n", prompt);
 
 	  /* TO BE FILLED (Get value from the file and print it. 
 	  Scatter the values. Send datatype and Recieve datatype is MPI_DOUBLE.)*/
@@ -231,23 +230,8 @@ void Mat_vect_mult(
 
    MPI_Allgather(local_x, local_n, MPI_DOUBLE, x, local_n,MPI_DOUBLE, comm);
 
-/*test code
- printf("rank %d vector x\n", local_rank);	
-  for( j=0 ; j < n; j++) 
-	printf("%lf ", x[j]);
-  printf("\n");	*/
-
- /* TO BE FILLED (Use local_a and local_x to multiply and add it to my_y)
-  for (i=0; i < local_m; i++) {
-	my_y[i]=0;
-	for( j=0 ; j < n; j++) {
-		// printf("[%d,%d][%lf, %lf]\n", i,j,local_A[i*n+j], x[j]);
-		my_y[i] += local_A[i*n+j] * x[j];
-	}
-   } */
-
-
-// save the result in right location, the location should be local_start = rank * unit_size + start to local_end = start + unit_size 
+// save the result in right location, the location 
+// should be local_start = rank * unit_size + start to local_end = start + unit_size 
    m_loc =  local_rank * local_m; 	
     for (i=0; i < local_m; i++) {
 	for( j=0 ; j < n; j++) {
@@ -255,13 +239,6 @@ void Mat_vect_mult(
 	}
    } 
   
- printf("rank %d vector y\n", local_rank);	
-  for( j=0 ; j < n; j++) 
-	printf("%lf ", my_y[j]);
-  printf("\n");
-
-
-
   recv_counts = malloc(comm_sz*sizeof(int));
    
   for (i = 0; i < comm_sz; i++) 
