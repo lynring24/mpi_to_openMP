@@ -222,10 +222,10 @@ void Mat_vect_mult(
    int* recv_counts;
    int i, j;
    int m_loc; 
-   recv_counts = malloc(comm_sz*sizeof(int));
-   my_y = malloc(n*sizeof(double));
+
    x = malloc(n*sizeof(double));
 
+   my_y = malloc(n*sizeof(double));
    MPI_Allgather(local_x, local_n, MPI_DOUBLE, x, local_n,MPI_DOUBLE, comm);
 
 /*test code
@@ -243,27 +243,28 @@ void Mat_vect_mult(
 	}
    } */
 
+
 // save the result in right location, the location should be local_start = rank * unit_size + start to local_end = start + unit_size 
-     m_loc =  local_rank * local_m; 
+   m_loc =  local_rank * local_m; 
+   printf("\n rank %d : ", local_rank);		
     for (i=0; i < local_m; i++) {
 	my_y[i]=0;
 	for( j=0 ; j < n; j++) {
-		//printf("[%d,%d][%lf, %lf]\n", i,j,local_A[i*n+j], x[j]);
 		my_y[i+m_loc] += local_A[i*n+j] * x[j];
 	}
+        printf("%lf ", my_y[i+m_loc] );
    } 
-/*test code
-  for( j=0 ; j < n; j++) 
-		printf("%lf ", my_y[j]);
   printf("\n");	
 
-   MPI_Allreduce(my_y, &local_y, 4 , MPI_DOUBLE, MPI_SUM, comm);*/
-
+  recv_counts = malloc(comm_sz*sizeof(int));
+   
   for (i = 0; i < comm_sz; i++) 
       recv_counts[i] = local_m;
    
    MPI_Reduce_scatter(my_y, local_y, recv_counts, MPI_DOUBLE, MPI_SUM, comm);
+   free(x);
    free(my_y);
+   free(recv_counts);
 }
 
 void Print_vector(
